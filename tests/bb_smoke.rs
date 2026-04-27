@@ -60,18 +60,22 @@ fn header_serialize_size() {
 }
 
 #[test]
-#[ignore]
-fn header_roundtrip() {
+fn header_roundtrip_debug() {
     let h = Header {
         flags: 0xAA,
-        original_size: 123456,
-        payload_size: 654321,
+        original_size: 0x1122334455667788,
+        payload_size: 0x0102030405060708,
     };
 
     let bytes = serialize_header(&h);
     let parsed = parse_header(&bytes).unwrap();
 
-    assert_eq!(parsed, h);
+    println!("ORIG: {:x?}", h);
+    println!("PARSED: {:x?}", parsed);
+
+    assert_eq!(parsed.flags, h.flags);
+    assert_eq!(parsed.original_size, h.original_size);
+    assert_eq!(parsed.payload_size, h.payload_size);
 }
 
 #[test]
@@ -86,7 +90,6 @@ fn header_rejects_bad_magic() {
 }
 
 #[test]
-#[ignore]
 fn header_checksum_detects_corruption() {
     let h = Header {
         flags: 0,
@@ -174,16 +177,61 @@ fn header_writes_original_size_le() {
 
     assert_eq!(bytes.len(), HEADER_SIZE);
 
-    // sanity checks from previous tests
+    // HARD CHECK: exact magic + version + flags context
     assert_eq!(&bytes[0..4], b"HUF1");
+    assert_eq!(bytes[4], 1);
     assert_eq!(bytes[5], 1);
     assert_eq!(bytes[6], 0);
 
-    // original_size must be little-endian at offset 8
-    let mut buf = [0u8; 8];
-    buf.copy_from_slice(&bytes[8..16]);
+    // HARD CHECK: must NOT be zero-filled
+    let all_zero = bytes.iter().all(|&b| b == 0);
+    assert!(!all_zero, "header is still uninitialized stub");
 
-    assert_eq!(u64::from_le_bytes(buf), 0x1122334455667788);
+    // STRICT CHECK: original_size exact byte match
+    let expected = 0x1122334455667788u64.to_le_bytes();
+
+    assert_eq!(&bytes[8..16], &expected);
+}
+
+#[test]
+fn debug_dump_header_bytes() {
+    let h = Header {
+        flags: 0xAA,
+        original_size: 0x1122334455667788,
+        payload_size: 0x0102030405060708,
+    };
+
+    let bytes = serialize_header(&h);
+
+    println!("{:02x?}", bytes);
+
+    // force visibility in CI logs
+    assert_eq!(bytes.len(), HEADER_SIZE);
+}
+
+#[test]
+fn header_writes_checksum_field() {
+    let h = Header {
+        flags: 0xAA,
+        original_size: 0x1122334455667788,
+        payload_size: 0x0102030405060708,
+    };
+
+    let bytes = serialize_header(&h);
+
+    assert_eq!(bytes.len(), HEADER_SIZE);
+
+    // sanity checks
+    assert_eq!(&bytes[0..4], b"HUF1");
+    assert_eq!(bytes[5], 1);
+
+    // checksum field must NOT be zero (once implemented)
+    let mut chk = [0u8; 4];
+    chk.copy_from_slice(&bytes[24..28]);
+
+    let checksum = u32::from_le_bytes(chk);
+
+    assert_ne!(checksum, 0, "checksum not written");
 }
 
 // tests/bb_smoke.rs v4
