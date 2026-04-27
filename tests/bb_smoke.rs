@@ -1,4 +1,4 @@
-// tests/bb_smoke.rs v1
+// tests/bb_smoke.rs v2
 
 use huffman_v2;
 
@@ -31,4 +31,62 @@ fn deterministic_output_stub_level() {
 
     assert_eq!(e1, e2);
 }
-// tests/bb_smoke.rs v1
+
+//
+// -------- Phase 2 Tests --------
+//
+
+#[test]
+// enable after implementing frequency table
+fn frequency_table_basic_counts() {
+    let input = b"aab";
+
+    let table = huffman_v2::build_frequency_table(input);
+
+    assert_eq!(table[b'a' as usize], 2);
+    assert_eq!(table[b'b' as usize], 1);
+
+    // everything else zero
+    for (i, &count) in table.iter().enumerate() {
+        if i != b'a' as usize && i != b'b' as usize {
+            assert_eq!(count, 0);
+        }
+    }
+}
+
+#[test]
+#[ignore] // enable after implementing frequency table
+fn frequency_table_all_bytes() {
+    let input: Vec<u8> = (0u8..=255u8).collect();
+
+    let table = huffman_v2::build_frequency_table(&input);
+
+    for i in 0..256 {
+        assert_eq!(table[i], 1);
+    }
+}
+
+#[test]
+#[ignore] // enable after implementing checksum
+fn checksum_deterministic() {
+    let data = b"some data";
+
+    let c1 = huffman_v2::checksum32(data);
+    let c2 = huffman_v2::checksum32(data);
+
+    assert_eq!(c1, c2);
+}
+
+#[test]
+#[ignore] // enable after implementing checksum
+fn checksum_detects_change() {
+    let data1 = b"some data";
+    let data2 = b"some data.";
+
+    let c1 = huffman_v2::checksum32(data1);
+    let c2 = huffman_v2::checksum32(data2);
+
+    assert_ne!(c1, c2);
+}
+
+// tests/bb_smoke.rs v2
