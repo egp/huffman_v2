@@ -1,4 +1,4 @@
-// src/lib.rs v3
+// src/lib.rs v4
 
 pub fn encode(input: &[u8], _passphrase: Option<&[u8]>) -> Vec<u8> {
     input.to_vec()
@@ -18,9 +18,18 @@ pub fn build_frequency_table(input: &[u8]) -> [u32; 256] {
     table
 }
 
-pub fn checksum32(_data: &[u8]) -> u32 {
-    // STUB: still incorrect (tests remain ignored)
-    0
+pub fn checksum32(data: &[u8]) -> u32 {
+    const OFFSET_BASIS: u32 = 0x811c9dc5;
+    const FNV_PRIME: u32 = 0x01000193;
+
+    let mut hash = OFFSET_BASIS;
+
+    for &byte in data {
+        hash ^= byte as u32;
+        hash = hash.wrapping_mul(FNV_PRIME);
+    }
+
+    hash
 }
 
-// src/lib.rs v3
+// src/lib.rs v4

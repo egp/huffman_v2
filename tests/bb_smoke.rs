@@ -1,4 +1,4 @@
-// tests/bb_smoke.rs v2
+// tests/bb_smoke.rs v3
 
 use huffman_v2;
 
@@ -33,11 +33,10 @@ fn deterministic_output_stub_level() {
 }
 
 //
-// -------- Phase 2 Tests --------
+// -------- Phase 2: Frequency Table --------
 //
 
 #[test]
-// enable after implementing frequency table
 fn frequency_table_basic_counts() {
     let input = b"aab";
 
@@ -46,7 +45,6 @@ fn frequency_table_basic_counts() {
     assert_eq!(table[b'a' as usize], 2);
     assert_eq!(table[b'b' as usize], 1);
 
-    // everything else zero
     for (i, &count) in table.iter().enumerate() {
         if i != b'a' as usize && i != b'b' as usize {
             assert_eq!(count, 0);
@@ -55,7 +53,6 @@ fn frequency_table_basic_counts() {
 }
 
 #[test]
-#[ignore] // enable after implementing frequency table
 fn frequency_table_all_bytes() {
     let input: Vec<u8> = (0u8..=255u8).collect();
 
@@ -66,8 +63,31 @@ fn frequency_table_all_bytes() {
     }
 }
 
+//
+// -------- Phase 3: Checksum (FNV-1a) --------
+//
+
 #[test]
-#[ignore] // enable after implementing checksum
+fn checksum_known_vector_hello() {
+    let data = b"hello";
+
+    let checksum = huffman_v2::checksum32(data);
+
+    // FNV-1a 32-bit known value for "hello"
+    assert_eq!(checksum, 0x4f9f2cab);
+}
+
+#[test]
+fn checksum_known_vector_empty() {
+    let data = b"";
+
+    let checksum = huffman_v2::checksum32(data);
+
+    // offset basis (no bytes processed)
+    assert_eq!(checksum, 0x811c9dc5);
+}
+
+#[test]
 fn checksum_deterministic() {
     let data = b"some data";
 
@@ -78,7 +98,6 @@ fn checksum_deterministic() {
 }
 
 #[test]
-#[ignore] // enable after implementing checksum
 fn checksum_detects_change() {
     let data1 = b"some data";
     let data2 = b"some data.";
@@ -89,4 +108,4 @@ fn checksum_detects_change() {
     assert_ne!(c1, c2);
 }
 
-// tests/bb_smoke.rs v2
+// tests/bb_smoke.rs v3
