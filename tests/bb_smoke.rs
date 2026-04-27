@@ -140,7 +140,7 @@ fn header_writes_version() {
     assert_eq!(&bytes[0..4], b"HUF1");
 
     // VERSION MUST BE 1
-    assert_eq!(bytes[5], 1);
+    assert_eq!(bytes[4], 1);
 }
 
 #[test]
@@ -159,10 +159,10 @@ fn header_writes_flags_bitfield() {
     assert_eq!(&bytes[0..4], b"HUF1");
 
     // version
-    assert_eq!(bytes[5], 1);
+    assert_eq!(bytes[4], 1);
 
     // flags MUST be preserved exactly
-    assert_eq!(bytes[6], 0b0000_0001);
+    assert_eq!(bytes[5], 0b0000_0001);
 }
 
 #[test]
@@ -177,20 +177,33 @@ fn header_writes_original_size_le() {
 
     assert_eq!(bytes.len(), HEADER_SIZE);
 
-    // HARD CHECK: exact magic + version + flags context
+    // HARD CHECK: fixed header identity
     assert_eq!(&bytes[0..4], b"HUF1");
     assert_eq!(bytes[4], 1);
-    assert_eq!(bytes[5], 1);
-    assert_eq!(bytes[6], 0);
+    assert_eq!(bytes[5], 0);
 
-    // HARD CHECK: must NOT be zero-filled
-    let all_zero = bytes.iter().all(|&b| b == 0);
-    assert!(!all_zero, "header is still uninitialized stub");
+    // checksum field must be present and consistent (not assumed zero)
+    let mut tmp = bytes.clone();
+    tmp[6..10].fill(0);
 
-    // STRICT CHECK: original_size exact byte match
+    let mut chk = [0u8; 4];
+    chk.copy_from_slice(&bytes[6..10]);
+
+    assert_eq!(
+        u32::from_le_bytes(chk),
+        crate::checksum32(&tmp),
+        "checksum mismatch"
+    );
+
+    // must NOT be all-zero header (sanity check)
+    assert!(
+        !bytes.iter().all(|&b| b == 0),
+        "header is still uninitialized stub"
+    );
+
+    // STRICT CHECK: original_size encoding
     let expected = 0x1122334455667788u64.to_le_bytes();
-
-    assert_eq!(&bytes[8..16], &expected);
+    assert_eq!(&bytes[10..18], &expected);
 }
 
 #[test]
@@ -223,15 +236,17 @@ fn header_writes_checksum_field() {
 
     // sanity checks
     assert_eq!(&bytes[0..4], b"HUF1");
-    assert_eq!(bytes[5], 1);
+    assert_eq!(bytes[4], 1);
 
     // checksum field must NOT be zero (once implemented)
-    let mut chk = [0u8; 4];
-    chk.copy_from_slice(&bytes[24..28]);
+    let mut tmp = bytes.clone();
+    tmp[6..10].fill(0);
 
+    let mut chk = [0u8; 4];
+    chk.copy_from_slice(&bytes[6..10]);
     let checksum = u32::from_le_bytes(chk);
 
-    assert_ne!(checksum, 0, "checksum not written");
+    assert_eq!(checksum, crate::checksum32(&tmp));
 }
 
 #[test]

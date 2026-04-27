@@ -14,6 +14,7 @@ pub struct Node {
 pub fn build_tree(freq: &[u32; 256]) -> Vec<Node> {
     let mut nodes: Vec<Node> = Vec::new();
 
+    // 1. Create leaf nodes
     for (i, &f) in freq.iter().enumerate() {
         if f > 0 {
             nodes.push(Node {
@@ -26,18 +27,24 @@ pub fn build_tree(freq: &[u32; 256]) -> Vec<Node> {
         }
     }
 
+    // Edge case: empty or single symbol
     if nodes.len() <= 1 {
         return nodes;
     }
 
+    // 2. Active set of indices
     let mut active: Vec<usize> = (0..nodes.len()).collect();
 
+    // 3. Deterministic Huffman construction
     while active.len() > 1 {
         active.sort_by(|&a, &b| {
-            nodes[a]
-                .weight
-                .cmp(&nodes[b].weight)
-                .then(nodes[a].symbol.cmp(&nodes[b].symbol))
+            let na = &nodes[a];
+            let nb = &nodes[b];
+
+            na.weight
+                .cmp(&nb.weight)
+                .then_with(|| na.symbol.cmp(&nb.symbol))
+                .then_with(|| a.cmp(&b)) // final deterministic tie-breaker
         });
 
         let a = active.remove(0);
@@ -132,10 +139,19 @@ impl BitWriter {
     }
 
     pub fn finish(mut self) -> Vec<u8> {
+        let mut out = Vec::new();
+
+        let bit_len = (self.buffer.len() as u32 * 8) + self.pos as u32;
+
+        out.extend_from_slice(&bit_len.to_le_bytes());
+
         if self.pos > 0 {
             self.flush();
         }
-        self.buffer
+
+        out.extend_from_slice(&self.buffer);
+
+        out
     }
 }
 
@@ -143,18 +159,28 @@ pub struct BitReader<'a> {
     data: &'a [u8],
     byte_pos: usize,
     bit_pos: u8,
+    remaining_bits: usize,
 }
 
 impl<'a> BitReader<'a> {
     pub fn new(data: &'a [u8]) -> Self {
+        let mut len_bytes = [0u8; 4];
+        len_bytes.copy_from_slice(&data[0..4]);
+        let bit_len = u32::from_le_bytes(len_bytes) as usize;
+
         Self {
-            data,
+            data: &data[4..],
             byte_pos: 0,
             bit_pos: 0,
+            remaining_bits: bit_len,
         }
     }
 
     pub fn next_bit(&mut self) -> Option<u8> {
+        if self.remaining_bits == 0 {
+            return None;
+        }
+
         if self.byte_pos >= self.data.len() {
             return None;
         }
@@ -163,6 +189,7 @@ impl<'a> BitReader<'a> {
         let bit = (byte >> (7 - self.bit_pos)) & 1;
 
         self.bit_pos += 1;
+        self.remaining_bits -= 1;
 
         if self.bit_pos == 8 {
             self.bit_pos = 0;
@@ -189,28 +216,40 @@ pub fn encode_stream(input: &[u8], codes: &std::collections::HashMap<u8, Vec<u8>
 
 pub fn decode_stream(encoded: &[u8], tree: &[Node], expected_len: usize) -> Vec<u8> {
     let mut output = Vec::with_capacity(expected_len);
-    let mut reader = BitReader::new(encoded);
 
+    if tree.is_empty() {
+        return output;
+    }
+
+    let mut reader = BitReader::new(encoded);
     let mut current = tree.len() - 1;
 
     while output.len() < expected_len {
         let bit = match reader.next_bit() {
             Some(b) => b,
-            None => break, // safety fallback (padding case)
+            None => break,
         };
 
         let node = &tree[current];
 
-        current = if bit == 0 {
-            node.left.unwrap()
-        } else {
-            node.right.unwrap()
+        let next = if bit == 0 { node.left } else { node.right };
+
+        let next = match next {
+            Some(n) => n,
+            None => {
+                // IMPORTANT: we are in invalid traversal state
+                break;
+            }
         };
+
+        current = next;
 
         let node = &tree[current];
 
         if node.is_leaf {
-            output.push(node.symbol.unwrap());
+            if let Some(sym) = node.symbol {
+                output.push(sym);
+            }
             current = tree.len() - 1;
         }
     }

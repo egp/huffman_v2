@@ -10,6 +10,16 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     let tree = build_tree(&freq);
     let codes = build_codes(&tree);
 
-    encode_stream(input, &codes)
+    let encoded = encode_stream(input, &codes);
+
+    // PREPEND frequency table (temporary transport layer)
+    let freq_bytes: Vec<u8> = freq.iter().flat_map(|v| v.to_le_bytes()).collect();
+
+    let mut out = Vec::with_capacity(freq_bytes.len() + encoded.len());
+    out.extend_from_slice(&freq_bytes);
+    out.extend_from_slice(&encoded);
+
+    out
 }
+
 // src/encode.rs v3
