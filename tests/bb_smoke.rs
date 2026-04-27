@@ -105,4 +105,21 @@ fn header_checksum_detects_corruption() {
     assert!(result.is_err());
 }
 
+#[test]
+fn header_serialize_writes_magic() {
+    let h = Header {
+        flags: 0,
+        original_size: 123,
+        payload_size: 456,
+    };
+
+    let bytes = serialize_header(&h);
+
+    // Must be correct size
+    assert_eq!(bytes.len(), HEADER_SIZE);
+
+    // MUST write magic
+    assert_eq!(&bytes[0..4], b"HUF1");
+}
+
 // tests/bb_smoke.rs v4

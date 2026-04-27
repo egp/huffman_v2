@@ -42,8 +42,11 @@ pub fn checksum32(data: &[u8]) -> u32 {
 // -------- Frame (STUBS) --------
 
 pub fn serialize_header(_h: &Header) -> Vec<u8> {
-    // STUB
-    vec![0u8; HEADER_SIZE]
+    let mut buf = vec![0u8; HEADER_SIZE];
+
+    buf[0..4].copy_from_slice(b"HUF1");
+
+    buf
 }
 
 pub fn parse_header(_data: &[u8]) -> Result<Header, String> {
