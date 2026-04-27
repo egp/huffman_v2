@@ -360,4 +360,22 @@ fn encoder_produces_deterministic_bitstream() {
     assert_eq!(encoded, encoded2);
 }
 
+#[test]
+fn huffman_roundtrip_reconstructs_input() {
+    let mut freq = [0u32; 256];
+    freq[65] = 5;
+    freq[66] = 5;
+    freq[67] = 10;
+
+    let tree = huffman::build_tree(&freq);
+    let codes = huffman::build_codes(&tree);
+
+    let input = vec![65u8, 66, 65, 67, 66];
+
+    let encoded = huffman::encode_stream(&input, &codes);
+    let decoded = huffman::decode_stream(&encoded, &tree, input.len());
+
+    assert_eq!(decoded, input);
+}
+
 // tests/bb_smoke.rs v4

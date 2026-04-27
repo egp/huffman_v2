@@ -139,6 +139,40 @@ impl BitWriter {
     }
 }
 
+pub struct BitReader<'a> {
+    data: &'a [u8],
+    byte_pos: usize,
+    bit_pos: u8,
+}
+
+impl<'a> BitReader<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        Self {
+            data,
+            byte_pos: 0,
+            bit_pos: 0,
+        }
+    }
+
+    pub fn next_bit(&mut self) -> Option<u8> {
+        if self.byte_pos >= self.data.len() {
+            return None;
+        }
+
+        let byte = self.data[self.byte_pos];
+        let bit = (byte >> (7 - self.bit_pos)) & 1;
+
+        self.bit_pos += 1;
+
+        if self.bit_pos == 8 {
+            self.bit_pos = 0;
+            self.byte_pos += 1;
+        }
+
+        Some(bit)
+    }
+}
+
 pub fn encode_stream(input: &[u8], codes: &std::collections::HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut writer = BitWriter::new();
 
@@ -151,6 +185,37 @@ pub fn encode_stream(input: &[u8], codes: &std::collections::HashMap<u8, Vec<u8>
     }
 
     writer.finish()
+}
+
+pub fn decode_stream(encoded: &[u8], tree: &[Node], expected_len: usize) -> Vec<u8> {
+    let mut output = Vec::with_capacity(expected_len);
+    let mut reader = BitReader::new(encoded);
+
+    let mut current = tree.len() - 1;
+
+    while output.len() < expected_len {
+        let bit = match reader.next_bit() {
+            Some(b) => b,
+            None => break, // safety fallback (padding case)
+        };
+
+        let node = &tree[current];
+
+        current = if bit == 0 {
+            node.left.unwrap()
+        } else {
+            node.right.unwrap()
+        };
+
+        let node = &tree[current];
+
+        if node.is_leaf {
+            output.push(node.symbol.unwrap());
+            current = tree.len() - 1;
+        }
+    }
+
+    output
 }
 
 // src/huffman.rs v1
