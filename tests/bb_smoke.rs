@@ -342,4 +342,22 @@ fn huffman_codes_are_deterministic() {
     assert_eq!(codes1, codes2);
 }
 
+#[test]
+fn encoder_produces_deterministic_bitstream() {
+    let mut freq = [0u32; 256];
+    freq[65] = 5;
+    freq[66] = 5;
+
+    let tree = huffman::build_tree(&freq);
+    let codes = huffman::build_codes(&tree);
+
+    let input = vec![65u8, 66u8, 65u8];
+
+    let encoded = huffman::encode_stream(&input, &codes);
+
+    let encoded2 = huffman::encode_stream(&input, &codes);
+
+    assert_eq!(encoded, encoded2);
+}
+
 // tests/bb_smoke.rs v4

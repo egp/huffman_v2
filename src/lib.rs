@@ -7,7 +7,7 @@ pub mod huffman;
 pub use checksum::checksum32;
 pub use frame::FrameType;
 pub use header::{parse_header, serialize_header, Header, HEADER_SIZE};
-pub use huffman::{build_codes, build_tree};
+pub use huffman::{build_codes, build_tree, encode_stream};
 
 pub fn encode(input: &[u8], _passphrase: Option<&str>) -> Vec<u8> {
     if input.is_empty() {
