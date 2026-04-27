@@ -1,6 +1,4 @@
-// Simple checksum abstraction layer (FNV-like placeholder)
-// Kept isolated so algorithm can be swapped later.
-
+// src/checksum.rs V1
 pub fn checksum32(data: &[u8]) -> u32 {
     let mut hash: u32 = 2166136261;
 
@@ -11,3 +9,4 @@ pub fn checksum32(data: &[u8]) -> u32 {
 
     hash
 }
+// src/checksum.rs V1

@@ -218,4 +218,12 @@ pub fn decode_stream(encoded: &[u8], tree: &[Node], expected_len: usize) -> Vec<
     output
 }
 
+pub fn build_frequency_table(input: &[u8]) -> [u32; 256] {
+    let mut freq = [0u32; 256];
+    for &b in input {
+        freq[b as usize] += 1;
+    }
+    freq
+}
+
 // src/huffman.rs v1

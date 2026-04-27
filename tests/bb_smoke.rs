@@ -5,24 +5,24 @@ use huffman_v2::*;
 #[test]
 fn roundtrip_empty_input() {
     let input: &[u8] = b"";
-    let encoded = encode(input, None);
-    let decoded = decode(&encoded, None);
+    let encoded = encode(input);
+    let decoded = decode(&encoded);
     assert_eq!(decoded, input);
 }
 
 #[test]
 fn roundtrip_single_byte() {
     let input = b"a";
-    let encoded = encode(input, None);
-    let decoded = decode(&encoded, None);
+    let encoded = encode(input);
+    let decoded = decode(&encoded);
     assert_eq!(decoded, input);
 }
 
 #[test]
 fn deterministic_output_stub_level() {
     let input = b"hello hello hello";
-    let e1 = encode(input, None);
-    let e2 = encode(input, None);
+    let e1 = encode(input);
+    let e2 = encode(input);
     assert_eq!(e1, e2);
 }
 
@@ -374,6 +374,16 @@ fn huffman_roundtrip_reconstructs_input() {
 
     let encoded = huffman::encode_stream(&input, &codes);
     let decoded = huffman::decode_stream(&encoded, &tree, input.len());
+
+    assert_eq!(decoded, input);
+}
+
+#[test]
+fn frame_codec_roundtrip_internal_table() {
+    let input = b"hello hello hello";
+
+    let encoded = encode(input);
+    let decoded = decode(&encoded);
 
     assert_eq!(decoded, input);
 }
