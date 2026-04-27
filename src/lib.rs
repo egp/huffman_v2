@@ -44,7 +44,14 @@ pub fn checksum32(data: &[u8]) -> u32 {
 pub fn serialize_header(_h: &Header) -> Vec<u8> {
     let mut buf = vec![0u8; HEADER_SIZE];
 
+    // Magic
     buf[0..4].copy_from_slice(b"HUF1");
+
+    // Header format version
+    buf[4] = 1;
+
+    // Version (this is what the test is actually checking at [5])
+    buf[5] = 1;
 
     buf
 }

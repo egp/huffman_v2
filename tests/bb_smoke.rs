@@ -122,4 +122,23 @@ fn header_serialize_writes_magic() {
     assert_eq!(&bytes[0..4], b"HUF1");
 }
 
+#[test]
+fn header_writes_version() {
+    let h = Header {
+        flags: 0,
+        original_size: 123,
+        payload_size: 456,
+    };
+
+    let bytes = serialize_header(&h);
+
+    assert_eq!(bytes.len(), HEADER_SIZE);
+
+    // magic already enforced
+    assert_eq!(&bytes[0..4], b"HUF1");
+
+    // VERSION MUST BE 1
+    assert_eq!(bytes[5], 1);
+}
+
 // tests/bb_smoke.rs v4
