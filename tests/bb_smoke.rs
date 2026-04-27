@@ -234,4 +234,11 @@ fn header_writes_checksum_field() {
     assert_ne!(checksum, 0, "checksum not written");
 }
 
+#[test]
+fn frame_header_type_exists() {
+    let frame_type = FrameType::Header;
+
+    assert_eq!(frame_type as u8, 0);
+}
+
 // tests/bb_smoke.rs v4
