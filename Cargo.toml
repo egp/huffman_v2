@@ -8,3 +8,4 @@ name = "huffman_v2"
 path = "src/lib.rs"
 
 [dependencies]
+huffman = "0.0.3"

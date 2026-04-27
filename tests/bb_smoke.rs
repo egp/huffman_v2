@@ -315,4 +315,31 @@ fn frequency_table_internal_rejects_wrong_size() {
     assert!(result.is_err());
 }
 
+#[test]
+fn huffman_tree_builds_deterministically() {
+    let mut freq = [0u32; 256];
+    freq[65] = 5;
+    freq[66] = 5;
+    freq[67] = 10;
+
+    let tree1 = huffman::build_tree(&freq);
+    let tree2 = huffman::build_tree(&freq);
+
+    assert_eq!(tree1, tree2);
+}
+
+#[test]
+fn huffman_codes_are_deterministic() {
+    let mut freq = [0u32; 256];
+    freq[65] = 5;
+    freq[66] = 5;
+    freq[67] = 10;
+
+    let tree = huffman::build_tree(&freq);
+    let codes1 = huffman::build_codes(&tree);
+    let codes2 = huffman::build_codes(&tree);
+
+    assert_eq!(codes1, codes2);
+}
+
 // tests/bb_smoke.rs v4

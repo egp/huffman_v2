@@ -1,11 +1,13 @@
 pub mod checksum;
 pub mod frame;
 pub mod header;
+pub mod huffman;
 
 // Core exports (test-facing API)
 pub use checksum::checksum32;
 pub use frame::FrameType;
 pub use header::{parse_header, serialize_header, Header, HEADER_SIZE};
+pub use huffman::{build_codes, build_tree};
 
 pub fn encode(input: &[u8], _passphrase: Option<&str>) -> Vec<u8> {
     if input.is_empty() {
