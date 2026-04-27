@@ -1,6 +1,10 @@
 [package]
 name = "huffman_v2"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+
+[lib]
+name = "huffman_v2"
+path = "src/lib.rs"
 
 [dependencies]
