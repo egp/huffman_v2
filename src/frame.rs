@@ -44,6 +44,10 @@ pub fn unpack(frame: &[u8]) -> Result<(FrameType, Vec<u8>), String> {
 
     let payload = frame[5..5 + len].to_vec();
 
+    if t == FrameType::FrequencyTableInternal && payload.len() != 1024 {
+        return Err("invalid frequency table size".into());
+    }
+
     Ok((t, payload))
 }
 

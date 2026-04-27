@@ -294,4 +294,25 @@ fn frequency_table_external_frame_roundtrip() {
     assert_eq!(std::str::from_utf8(&out).unwrap(), name);
 }
 
+#[test]
+fn frequency_table_internal_must_be_fixed_size() {
+    let payload = vec![0u8; 1024];
+
+    let frame = frame::pack(FrameType::FrequencyTableInternal, &payload);
+    let (_, out) = frame::unpack(&frame).unwrap();
+
+    assert_eq!(out.len(), 1024);
+}
+
+#[test]
+fn frequency_table_internal_rejects_wrong_size() {
+    let bad_payload = vec![0u8; 100]; // invalid
+
+    let frame = frame::pack(FrameType::FrequencyTableInternal, &bad_payload);
+
+    let result = frame::unpack(&frame);
+
+    assert!(result.is_err());
+}
+
 // tests/bb_smoke.rs v4
