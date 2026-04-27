@@ -58,8 +58,11 @@ pub fn serialize_header(h: &Header) -> Vec<u8> {
     // Version
     buf[5] = 1;
 
-    // Flags (bitfield)
+    // Flags
     buf[6] = h.flags;
+
+    // original_size (u64 LE)
+    buf[8..16].copy_from_slice(&h.original_size.to_le_bytes());
 
     buf
 }

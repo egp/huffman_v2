@@ -162,4 +162,28 @@ fn header_writes_flags_bitfield() {
     assert_eq!(bytes[6], 0b0000_0001);
 }
 
+#[test]
+fn header_writes_original_size_le() {
+    let h = Header {
+        flags: 0,
+        original_size: 0x1122334455667788,
+        payload_size: 0,
+    };
+
+    let bytes = serialize_header(&h);
+
+    assert_eq!(bytes.len(), HEADER_SIZE);
+
+    // sanity checks from previous tests
+    assert_eq!(&bytes[0..4], b"HUF1");
+    assert_eq!(bytes[5], 1);
+    assert_eq!(bytes[6], 0);
+
+    // original_size must be little-endian at offset 8
+    let mut buf = [0u8; 8];
+    buf.copy_from_slice(&bytes[8..16]);
+
+    assert_eq!(u64::from_le_bytes(buf), 0x1122334455667788);
+}
+
 // tests/bb_smoke.rs v4
