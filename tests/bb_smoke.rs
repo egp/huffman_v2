@@ -75,7 +75,6 @@ fn header_roundtrip() {
 }
 
 #[test]
-#[ignore]
 fn header_rejects_bad_magic() {
     let mut bytes = vec![0u8; HEADER_SIZE];
 
@@ -139,6 +138,28 @@ fn header_writes_version() {
 
     // VERSION MUST BE 1
     assert_eq!(bytes[5], 1);
+}
+
+#[test]
+fn header_writes_flags_bitfield() {
+    let h = Header {
+        flags: 0b0000_0001, // XOR flag ON (future use, but must serialize correctly)
+        original_size: 123,
+        payload_size: 456,
+    };
+
+    let bytes = serialize_header(&h);
+
+    assert_eq!(bytes.len(), HEADER_SIZE);
+
+    // magic
+    assert_eq!(&bytes[0..4], b"HUF1");
+
+    // version
+    assert_eq!(bytes[5], 1);
+
+    // flags MUST be preserved exactly
+    assert_eq!(bytes[6], 0b0000_0001);
 }
 
 // tests/bb_smoke.rs v4

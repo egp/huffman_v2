@@ -41,24 +41,27 @@ pub fn checksum32(data: &[u8]) -> u32 {
 
 // -------- Frame (STUBS) --------
 
-pub fn serialize_header(_h: &Header) -> Vec<u8> {
+pub fn parse_header(_data: &[u8]) -> Result<Header, String> {
+    // STUB
+    Err("not implemented".into())
+}
+
+pub fn serialize_header(h: &Header) -> Vec<u8> {
     let mut buf = vec![0u8; HEADER_SIZE];
 
     // Magic
     buf[0..4].copy_from_slice(b"HUF1");
 
-    // Header format version
+    // Header format
     buf[4] = 1;
 
-    // Version (this is what the test is actually checking at [5])
+    // Version
     buf[5] = 1;
 
-    buf
-}
+    // Flags (bitfield)
+    buf[6] = h.flags;
 
-pub fn parse_header(_data: &[u8]) -> Result<Header, String> {
-    // STUB
-    Err("not implemented".into())
+    buf
 }
 
 // src/lib.rs v5
