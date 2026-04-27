@@ -241,4 +241,15 @@ fn frame_header_type_exists() {
     assert_eq!(frame_type as u8, 0);
 }
 
+#[test]
+fn frame_basic_pack_and_unpack() {
+    let payload = vec![1u8, 2, 3, 4];
+
+    let frame = frame::pack(FrameType::Header, &payload);
+    let (t, out) = frame::unpack(&frame).unwrap();
+
+    assert_eq!(t, FrameType::Header);
+    assert_eq!(out, payload);
+}
+
 // tests/bb_smoke.rs v4
