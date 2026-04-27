@@ -1,3 +1,5 @@
+// src/frame.rs v2
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrameType {
     Header = 0,
@@ -44,3 +46,5 @@ pub fn unpack(frame: &[u8]) -> Result<(FrameType, Vec<u8>), String> {
 
     Ok((t, payload))
 }
+
+// src/frame.rs v2

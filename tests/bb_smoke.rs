@@ -252,4 +252,46 @@ fn frame_basic_pack_and_unpack() {
     assert_eq!(out, payload);
 }
 
+#[test]
+fn frequency_table_frame_roundtrip() {
+    let mut table = [0u32; 256];
+    table[65] = 10;
+    table[66] = 20;
+
+    let mut payload = Vec::new();
+    for v in table.iter() {
+        payload.extend_from_slice(&v.to_le_bytes());
+    }
+
+    let frame = frame::pack(FrameType::FrequencyTableInternal, &payload);
+    let (t, out) = frame::unpack(&frame).unwrap();
+
+    assert_eq!(t, FrameType::FrequencyTableInternal);
+
+    let mut decoded = [0u32; 256];
+    for i in 0..256 {
+        let mut b = [0u8; 4];
+        b.copy_from_slice(&out[i * 4..i * 4 + 4]);
+        decoded[i] = u32::from_le_bytes(b);
+    }
+
+    assert_eq!(decoded[65], 10);
+    assert_eq!(decoded[66], 20);
+}
+
+#[test]
+fn frequency_table_external_frame_roundtrip() {
+    let name = "wikipedia_en";
+
+    let payload = name.as_bytes();
+
+    let frame = frame::pack(FrameType::FrequencyTableExternal, payload);
+    let (t, out) = frame::unpack(&frame).unwrap();
+
+    assert_eq!(t, FrameType::FrequencyTableExternal);
+    assert_eq!(out, payload);
+
+    assert_eq!(std::str::from_utf8(&out).unwrap(), name);
+}
+
 // tests/bb_smoke.rs v4
