@@ -1,74 +1,63 @@
-// src/header.rs v7
+/* src/header.rs v5 */
+use crate::checksum::checksum32;
 
-pub const MAGIC: &[u8; 4] = b"HUF1";
-pub const VERSION: u8 = 1;
-pub const HEADER_SIZE: usize = 26;
+pub const MAGIC_BYTES: &[u8; 4] = b"HUFF";
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Header {
+    pub version: u8,
     pub flags: u8,
-    pub original_size: u64,
-    pub payload_size: u64,
 }
 
-/// Wire format:
-/// 0..4   magic "HUF1"
-/// 4      version
-/// 5      flags
-/// 6..10  checksum (u32 LE)
-/// 10..18 original_size (u64 LE)
-/// 18..26 payload_size (u64 LE)
-pub fn serialize_header(h: &Header) -> Vec<u8> {
-    eprintln!(">>> USING HEADER VERSION A");
-    let mut buf = vec![0u8; HEADER_SIZE];
-
-    buf[0..4].copy_from_slice(b"HUF1");
-    buf[4] = 1; // version
-    buf[5] = h.flags;
-
-    buf[6..10].fill(0); // checksum placeholder
-
-    buf[10..18].copy_from_slice(&h.original_size.to_le_bytes());
-    buf[18..26].copy_from_slice(&h.payload_size.to_le_bytes());
-
-    // IMPORTANT: checksum over canonical pre-image
-    let mut tmp = buf.clone();
-    tmp[6..10].fill(0);
-
-    let c = crate::checksum32(&tmp);
-    buf[6..10].copy_from_slice(&c.to_le_bytes());
-
-    buf
+impl Default for Header {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            flags: 0,
+        }
+    }
 }
 
-pub fn parse_header(buf: &[u8]) -> Result<Header, String> {
-    if buf.len() != HEADER_SIZE {
-        return Err("invalid header size".into());
+impl Header {
+    pub fn new(version: u8, flags: u8) -> Self {
+        Self { version, flags }
     }
 
-    if &buf[0..4] != b"HUF1" {
-        return Err("bad magic".into());
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut tmp = MAGIC_BYTES.to_vec();
+        tmp.push(self.version);
+        tmp.push(self.flags);
+
+        let c = checksum32(&tmp);
+        let mut bytes = tmp;
+        bytes.extend_from_slice(&c.to_be_bytes());
+        bytes
+    }
+}
+
+pub fn validate_header(data: &[u8]) -> Result<Header, &'static str> {
+    if data.len() < 10 {
+        return Err("Header too short");
     }
 
-    if buf[4] != 1 {
-        return Err("unsupported version".into());
+    if &data[0..4] != MAGIC_BYTES {
+        return Err("Invalid magic bytes");
     }
 
-    let mut tmp = buf.to_vec();
-    tmp[6..10].fill(0);
+    let tmp = &data[0..6];
+    let actual = checksum32(tmp);
 
-    let expected = u32::from_le_bytes(buf[6..10].try_into().unwrap());
-    let actual = crate::checksum32(&tmp);
+    let mut check_bytes = [0u8; 4];
+    check_bytes.copy_from_slice(&data[6..10]);
+    let expected = u32::from_be_bytes(check_bytes);
 
-    if expected != actual {
-        return Err("checksum mismatch".into());
+    if actual != expected {
+        return Err("Header checksum mismatch");
     }
 
     Ok(Header {
-        flags: buf[5],
-        original_size: u64::from_le_bytes(buf[10..18].try_into().unwrap()),
-        payload_size: u64::from_le_bytes(buf[18..26].try_into().unwrap()),
+        version: data[4],
+        flags: data[5],
     })
 }
-
-// src/header.rs v7
+/* src/header.rs v5 */

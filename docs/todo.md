@@ -1,0 +1,23 @@
+# Huffman_v2 TDD Roadmap
+
+- [ ] **Cycle 1: Frame Structure & Magic Bytes**
+    - Red: Test `header.rs` for magic byte validation and versioning.
+    - Green: Implement Header Frame serialization.
+- [ ] **Cycle 2: Frequency Table & Deterministic Tree**
+    - Red: Test that two different Tree instances built from the same table produce identical bit-encodings.
+    - Green: Implement `Frequency Frame` logic.
+- [ ] **Cycle 3: Bit-Stream Alignment**
+    - Red: Test `BitWriter` for correct padding when the bit-count is not a multiple of 8.
+    - Green: Refine `BitWriter` in `huffman.rs`[cite: 1].
+- [ ] **Cycle 4: XOR Encryption Layer**
+    - Red: Test that an encrypted payload is unreadable without the passphrase but decodes perfectly with it.
+    - Green: Implement XOR logic in `encode.rs` and `decode.rs`[cite: 1].
+- [ ] **Cycle 5: Multi-Frame Assembly & Checksums**
+    - Red: Corrupt a single byte in a frame and assert the `checksum.rs` detects the failure[cite: 1].
+    - Green: Integrate checksums into the `Frame` wrapper.
+- [ ] **Cycle 6: Integration Smoke Test**
+    - Red: `bb_smoke.rs` test for end-to-end compression/decompression[cite: 1].
+    - Green: Connect `main.rs` to the full library pipeline.
+- [ ] **Cycle 7: Error Handling & CLI Refinement**
+    - Red: Test for missing external frequency files or invalid magic bytes.
+    - Green: Implement robust error messaging in `main.rs`[cite: 1].
